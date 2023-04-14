@@ -131,3 +131,4 @@ class CNNTrain():
 # trainer.model_train(False)
 # trainer.model_test(99)
 # test_loss, correct_cnt = trainer.model_evaluate()
+
