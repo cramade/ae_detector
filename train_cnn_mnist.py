@@ -1,15 +1,6 @@
 import os
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data as Data
-
-from torchvision import models
-import torchvision.utils
-import torchvision.datasets as datasets
-import torchvision.transforms as transforms
-
-from init_mnist import MNIST
+from data_manager import MNIST
 
 class CNN(torch.nn.Module):
     def __init__(self):
@@ -131,4 +122,3 @@ class CNNTrain():
 # trainer.model_train(False)
 # trainer.model_test(99)
 # test_loss, correct_cnt = trainer.model_evaluate()
-
