@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
+#from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
 
 def optimize_linear(grad, eps, norm=np.inf):
     """
