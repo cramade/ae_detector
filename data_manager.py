@@ -21,6 +21,18 @@ class MNIST():
         print(f"Test data size : {len(self.data_test)}")
         return "MNIST data"
 
+class AdvImages(torch.utils.data.Dataset):
+    def __init__(self, images, labels):
+        self.x_data = images
+        self.y_data = labels
+    
+    def __len__(self):
+        return len(self.x_data)
+
+    def __getitem__(self, idx):
+        x = torch.FloatTensor(self.x_data[idx])
+        y = self.y_data[idx]
+        return x,y
 
 #mnist = MNIST()
 #mnist.print()

@@ -3,8 +3,39 @@ import numpy as np
 import torch
 
 from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method
-from cleverhans.torch.utils import clip_eta
 
+
+def clip_eta(eta, norm, eps):
+    """
+    PyTorch implementation of the clip_eta in utils_tf.
+    :param eta: Tensor
+    :param norm: np.inf, 1, or 2
+    :param eps: float
+    """
+    if norm not in [np.inf, 1, 2]:
+        raise ValueError("norm must be np.inf, 1, or 2.")
+
+    avoid_zero_div = torch.tensor(1e-12, dtype=eta.dtype, device=eta.device)
+    reduc_ind = list(range(1, len(eta.size())))
+    if norm == np.inf:
+        eta = torch.clamp(eta, -eps, eps)
+    else:
+        if norm == 1:
+            raise NotImplementedError("L1 clip is not implemented.")
+            norm = torch.max(
+                avoid_zero_div, torch.sum(torch.abs(eta), dim=reduc_ind, keepdim=True)
+            )
+        elif norm == 2:
+            norm = torch.sqrt(
+                torch.max(
+                    avoid_zero_div, torch.sum(eta ** 2, dim=reduc_ind, keepdim=True)
+                )
+            )
+        factor = torch.min(
+            torch.tensor(1.0, dtype=eta.dtype, device=eta.device), eps / norm
+        )
+        eta *= factor
+    return eta
 
 def projected_gradient_descent(
     model_fn,
@@ -20,6 +51,7 @@ def projected_gradient_descent(
     rand_init=True,
     rand_minmax=None,
     sanity_checks=True,
+    verbose=False,
 ):
     """
     This class implements either the Basic Iterative Method
@@ -119,6 +151,7 @@ def projected_gradient_descent(
         _, y = torch.max(model_fn(x), 1)
 
     i = 0
+    # modified by Aram
     n_pred_change = nb_iter + 1
     while i < nb_iter:
         adv_x = fast_gradient_method(
@@ -142,13 +175,18 @@ def projected_gradient_descent(
         # small numerical error.
         if clip_min is not None or clip_max is not None:
             adv_x = torch.clamp(adv_x, clip_min, clip_max)
+
         i += 1
 
+        # modified by Aram
         _, pred_y = torch.max(model_fn(adv_x), 1)
         if(y != pred_y and i < n_pred_change):
-            #print(y, pred_y)
+            if(verbose == True):
+                print(f"1st pred: {y.item()}, 2nd pred: {pred_y.item()}, Label changed iter: {i} ")
             n_pred_change = i
-    
+        # end of while
+
+    # modified by Aram
     if(n_pred_change == nb_iter+1):
         n_pred_change = -1
 
@@ -159,4 +197,5 @@ def projected_gradient_descent(
 
     if sanity_checks:
         assert np.all(asserts)
-    return adv_x, n_pred_change
+    return adv_x, n_pred_change, pred_y.item()
+
